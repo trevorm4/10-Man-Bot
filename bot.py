@@ -2,120 +2,99 @@ import discord
 from discord.ext import commands
 import yaml
 import random
+from utils import get_member_name
 
-bot = commands.Bot(command_prefix='!')
-options = yaml.load(open("config.yaml",'r'))
-team_a = []
-team_b = []
-ready_dict = {}
-nick_to_player = {}
-captain_a = None
-captain_b = None
-
-@bot.command()
-async def newcaps(ctx):
-    global ready_dict
-    global nick_to_player
-    global captain_a
-    global captain_b
-    global team_a
-    global team_b
-    lobby_channel = [i for i in ctx.guild.voice_channels if i.name == options['lobby']][0]
-    players = lobby_channel.members
-    if len(players) != 10:
-        embed = discord.Embed(title="Valorant 10 Man bot",description="Sorry, you need 10 players and you currently have {} players".format(len(players)))
-        await ctx.send(embed=embed)
-        return
-    ready_dict = {k:False for k in players}
-    nick_to_player = {k.nick : k for k in players}
-    caps = random.sample(players,2)
-    embed = discord.Embed(title="Valorant 10 Man bot",description="The captains are now @{} and @{}".format(caps[0].nick,caps[1].nick))
-    captain_a = caps[0]
-    captain_b = caps[1]
-    team_a = [captain_a.nick]
-    team_b = [captain_b.nick]
-    await ctx.send(embed=embed)
-
-@bot.command()
-async def ready(ctx):
-    global ready_dict
-    ready_dict[ctx.author] = True
-    embed = discord.Embed(title="Valorant 10 Man bot",description="{} is now ready".format(ctx.author.nick))
-@bot.command()
-async def unready(ctx):
-    global ready_dict
-    ready_dict[ctx.author] = False
-    embed = discord.Embed(title="Valorant 10 Man bot",description="{} is now NOT ready".format(ctx.author.nick))
-
-@bot.command()
-async def draft(ctx,nick):
-    global nick_to_player
-    global team_a
-    global team_b
-    global captain_a
-    global captain_b
-    global options
-    remaining = await get_remaining()
-    team_chosen = None
-    if nick not in nick_to_player.keys():
-        embed = discord.Embed(title="Valorant 10 Man bot",description="{} is not a valid player, please try again".format(nick))
-        await ctx.send(embed=embed)
-        return
-    elif nick not in remaining:
-        embed = discord.Embed(title="Valorant 10 Man bot",description="{} was drafted already.\n The remaining players are {}".format(nick,remaining))
-        await ctx.send(embed=embed)
-        return
-    else:        
-        if ctx.author == captain_a:
-            if len(team_a) > len(team_b): # player a should never have more players when choosing
-                embed = discord.Embed(title="Valorant 10 Man bot",description="You've already drafted this turn, please wait for the other captain")
-                await ctx.send(embed=embed)
-                return
-            team_a.append(nick)
-            team_chosen = "a"
-        elif ctx.author == captain_b:
-            if len(team_b) > len(team_a): # Team 2 should never have more players when choosing
-                embed = discord.Embed(title="Valorant 10 Man bot",description="You've already drafted this turn, please wait for the other captain")
-                await ctx.send(embed=embed)
-                return
-            team_b.append(nick)
-            team_chosen = "b"
+class Bot(commands.Bot):
+    def __init__(self,command_prefix):
+        commands.Bot.__init__(self,command_prefix=command_prefix)
+        self.teams = {"A" : [], "B" : []}
+        self.ready_dict = {}
+        self.nick_to_player = {}
+        self.ready_dict = {}
+        self.remaining = []
+        self.captains = {"A" : None, "B": None}
+    async def set_captain(self,cap,team):
+        """
+        Sets captain for specified team
+            :param cap: discord.Member object representing user that is now captain
+            :param team: string for team name ("A" or "B")
+        """
+        self.captains[team.upper()] = cap
+    async def add_to_team(self,player,team):
+        """
+        Adds player to team
+            :param player: Discord.Member representing player member
+            :param team: string representing team name
+            :return discord.Embed: embed message to display
+        """
+        if get_member_name(player) not in nick_to_player.keys():
+            self.nick_to_player[get_member_name(player)] = player
+        if player in remaining:
+            self.teams[team].append(player)
+            self.remaining.remove(player)
+            return discord.Embed(title="Valorant 10 Man Bot",description="You have drafted {}".format(get_member_name(player)))
         else:
-            embed = discord.Embed(title="Valorant 10 Man bot",description="You are not a captain.\n The captains are {} and {}".format(captain_a.nick,captain_b.nick))
-            await ctx.send(embed=embed)
-            return
-    await move_player(ctx,nick,options["team_{}".format(team_chosen)])
-    if len(team_a) == 5 and len(team_b) == 5:
-        embed = discord.Embed(title="Valorant 10 Man bot",description="All the players have been drafted, captains should now use !start to start the game")
-        await ctx.send(embed=embed)
+            return discord.Embed(title="Valorant 10 Man Bot",description="Sorry, {} is already drafted".format(get_member_name(player)))
+    async def new_game(self, players):
+        """
+        Clears instance variables in preperation for new game
+            :param players: list of Discord.Member variables representing players
+        """   
+        if len(players) != 10:
+            return discord.Embed(title="Valorant 10 Man Bot",
+            description="You cannot start a game with only {} players".format(len(players)))
+        self.teams = {"A": [], "B" : []}
+        self.captains = {"A" : None, "B" : None}
+        self.nick_to_player = {get_member_name(p) : p for p in players}
+        self.ready_dict = {p : False for p in players}
+    async def generate_captains(self):
+        """
+        Generates two new captains and sets them as captains
+            :ret discord.Embed: embed object to display 
+        """   
+        caps = random.sample(self.remaining, 2) # 2 captains
+        for i,team in enumerate(self.captains.keys()):
+            self.set_captain(caps[i],team)
+            self.remaining.remove(caps[i])
+        return discord.Embed(title="Valorant 10 Man Bot",
+            description="The captains are @{} and @{}".format(get_member_name(caps[0],get_member_name(caps[1]))))
+    async def get_remaining(self):
+        """
+        Gets remaining players
+        :ret: list of remaining players of type Discord.Member
+        """   
+        return self.remaining
+    async def ready_up(self,player):
+        """
+        Sets status of player to ready
+            :param player: discord.Member object representing player
+            :return discord.Embed: embed object to display
+        """   
+        self.ready_dict[player] = True
+        return discord.Embed(title="Valorant 10 Man Bot",description="{} is now ready".format(get_member_name(player)))
+    async def move_player(self,player,channel):
+        """
+        Moves player to specified channel
+            :param player: discord.Member object that represents player
+            :param channel: discord.VoiceChannel object representing channel to move to
+        """
+        await player.move_to(channel)
+    async def draft_player(self,captain, player):
+        """
+        Drafts a player according to 1-2-1-1-1-1-1-1-1 schema
+            :param captain: discord.Member object representing captain
+            :param player:  string representing player name to draft
+        """
+        if player not in self.nick_to_player.keys():
+            return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a valid player".format(player))
+        elif captain not in captains.keys():
+            return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a captain".format(get_member_name(captain)))
 
-@bot.command()
-async def start(ctx):
-    global captain_a
-    global captain_b
-    global options
-    if ctx.author == captain_a:
-        await move_player(ctx, author.nick, options["team_a"])
-    elif ctx.author == captain_b:
-        await move_player(ctx,author.nick,options["team_b"])
-    else:
-        embed = discord.Embed(title="Valorant 10 Man bot",description="You're not a captain!")
-        await ctx.send(embed=embed)
+        player_obj = self.nick_to_player[player]
+        team = "A" if self.captains["A"] == captain else "B"
+        opp = "B" if self.captains["B"] == captain else "A"
 
-
-async def get_remaining():
-    global team_a
-    global team_b
-    players = list(nick_to_player.keys())
-    remaining = []
-    for p in players:
-        if p not in team_a and p not in team_b:
-            remaining.append(p)
-    return remaining
-
-async def move_player(ctx,nick,channel_name):
-    global nick_to_player
-    channel = [i for i in ctx.guild.voice_channels if i.name == channel_name][0]
-    await nick_to_player[nick].move_to(channel)
-bot.run(options['token'])
-
+        if len(self.teams[team]) > len(self.teams[opp]):
+            return discord.Embed(title="Valorant 10 Man bot",description="You've already drafted this turn, please wait for the other captain")
+        return await self.add_to_team(player_obj, team)
+        
