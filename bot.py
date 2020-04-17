@@ -13,6 +13,7 @@ class Bot(commands.Bot):
         self.ready_dict = {}
         self.remaining = []
         self.captains = {"A" : None, "B": None}
+        self.channels = {"A" : None, "B" : None}
     async def set_captain(self,cap,team):
         """
         Sets captain for specified team
@@ -20,6 +21,7 @@ class Bot(commands.Bot):
             :param team: string for team name ("A" or "B")
         """
         self.captains[team.upper()] = cap
+        print("captain of team {} is now {}".format(team,cap.name))
     async def add_to_team(self,player,team):
         """
         Adds player to team
@@ -27,9 +29,9 @@ class Bot(commands.Bot):
             :param team: string representing team name
             :return discord.Embed: embed message to display
         """
-        if get_member_name(player) not in nick_to_player.keys():
+        if get_member_name(player) not in self.nick_to_player.keys():
             self.nick_to_player[get_member_name(player)] = player
-        if player in remaining:
+        if player in self.remaining:
             self.teams[team].append(player)
             self.remaining.remove(player)
             return discord.Embed(title="Valorant 10 Man Bot",description="You have drafted {}".format(get_member_name(player)))
@@ -47,17 +49,20 @@ class Bot(commands.Bot):
         self.captains = {"A" : None, "B" : None}
         self.nick_to_player = {get_member_name(p) : p for p in players}
         self.ready_dict = {p : False for p in players}
-    async def generate_captains(self):
+        self.remaining = players.copy()
+    async def generate_captains(self,team_a_channel, team_b_channel):
         """
         Generates two new captains and sets them as captains
             :ret discord.Embed: embed object to display 
-        """   
+        """
+        print("remaining=",self.remaining)
+        #self.channels
         caps = random.sample(self.remaining, 2) # 2 captains
         for i,team in enumerate(self.captains.keys()):
-            self.set_captain(caps[i],team)
+            await self.set_captain(caps[i],team)
             self.remaining.remove(caps[i])
         return discord.Embed(title="Valorant 10 Man Bot",
-            description="The captains are @{} and @{}".format(get_member_name(caps[0],get_member_name(caps[1]))))
+            description="The captains are @{} and @{}".format(get_member_name(caps[0]),get_member_name(caps[1])))
     async def get_remaining(self):
         """
         Gets remaining players
@@ -79,22 +84,24 @@ class Bot(commands.Bot):
             :param channel: discord.VoiceChannel object representing channel to move to
         """
         await player.move_to(channel)
-    async def draft_player(self,captain, player):
+    async def draft_player(self,captain, player, channel_dict):
         """
         Drafts a player according to 1-2-1-1-1-1-1-1-1 schema
             :param captain: discord.Member object representing captain
-            :param player:  string representing player name to draft
+            :param player:  discord.Member object representing player
         """
-        if player not in self.nick_to_player.keys():
+        if (type(player) == str and player not in self.nick_to_player.keys()) or (type(player) == discord.Member and player not in self.nick_to_player.values()):
             return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a valid player".format(player))
-        elif captain not in captains.keys():
+        elif captain not in self.captains.values():
             return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a captain".format(get_member_name(captain)))
 
-        player_obj = self.nick_to_player[player]
+        player_obj = self.nick_to_player[player] if type(player) == str else player
         team = "A" if self.captains["A"] == captain else "B"
         opp = "B" if self.captains["B"] == captain else "A"
 
         if len(self.teams[team]) > len(self.teams[opp]):
             return discord.Embed(title="Valorant 10 Man bot",description="You've already drafted this turn, please wait for the other captain")
-        return await self.add_to_team(player_obj, team)
+        embed = await self.add_to_team(player_obj, team)
+        channel = channel_dict[team]
+        await self.move_player(player_obj,channel)
         
