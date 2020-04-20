@@ -22,7 +22,7 @@ class Bot(commands.Bot):
             :param team: string for team name ("A" or "B")
         """
         if type(cap) == str:
-            cap = self.nick_to_player[cap]
+            cap = self.nick_to_player[get_member_name(cap)]
         self.captains[team.upper()] = cap
         await self.add_to_team(cap,team)
         self.order.append(cap)
@@ -38,9 +38,8 @@ class Bot(commands.Bot):
         if player in self.remaining:
             self.teams[team].append(player)
             self.remaining.remove(player)
-            return discord.Embed(title="Valorant 10 Man Bot",description="You have drafted {}".format(get_member_name(player)))
+            return discord.Embed(title="Valorant 10 Man Bot",description="You have drafted {}".format(get_member_name(player,lower=False)))
         else:
-            print("not in remaining")
             return discord.Embed(title="Valorant 10 Man Bot",description="Sorry, {} is already drafted".format(get_member_name(player)))
     async def new_game(self, players):
         """
@@ -63,12 +62,15 @@ class Bot(commands.Bot):
         Generates two new captains and sets them as captains
             :ret discord.Embed: embed object to display 
         """
+        if len(self.remaining) != 10:
+            return discord.Embed(title="Valorant 10 Man Bot",
+                description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
         caps = random.sample(self.remaining, 2) # 2 captains
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
-            self.remaining.remove(caps[i])
+            #self.remaining.remove(caps[i])
         return discord.Embed(title="Valorant 10 Man Bot",
-            description="The captains are @{} and @{}".format(get_member_name(caps[0]),get_member_name(caps[1])))
+            description="The captains are @{} and @{}".format(get_member_name(caps[0],lower=False),get_member_name(caps[1],lower=False)))
     async def get_remaining(self):
         """
         Gets remaining players
@@ -96,17 +98,21 @@ class Bot(commands.Bot):
             :param captain: discord.Member object representing captain
             :param player:  discord.Member object representing player
         """
-        if (type(player) == str and player not in self.nick_to_player.keys()) or (type(player) == discord.Member and player not in self.nick_to_player.values()):
+        if (type(player) == str and get_member_name(player) not in self.nick_to_player.keys()) \
+            or (type(player) == discord.Member and player not in self.nick_to_player.values()):
             return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a valid player".format(player))
         elif captain not in self.captains.values():
             return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a captain".format(get_member_name(captain)))
-        player_obj = self.nick_to_player[player] if type(player) == str else player
+            
+        player_obj = self.nick_to_player[get_member_name(player)] if type(player) == str else player
         team = "A" if captain == self.captains["A"] else "B"
         opp = "B" if team == "A" else "A"
+
         if len(self.teams[team]) == 0 and len(self.teams[opp]) == 0 and self.order[0] != captain:
             return discord.Embed(title="Valorant 10 Man bot",description="The other captain gets to draft first, sorry!")
         elif len(self.teams[team]) > len(self.teams[opp]):
             return discord.Embed(title="Valorant 10 Man bot",description="You've already drafted this turn, please wait for the other captain")
+
         embed = await self.add_to_team(player_obj, team)
         channel = channel_dict[team]
         await self.move_player(player_obj,channel)
