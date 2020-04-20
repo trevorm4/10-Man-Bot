@@ -4,8 +4,9 @@ import yaml
 from utils import get_member_name
 from converters import Player
 
-bot = Bot("!")
 options = yaml.load(open("config.yaml",'r'))
+bot = Bot("!", options["scheme"].split(" "))
+
 @bot.command()
 async def newcaps(ctx):
     lobby_channel = [i for i in ctx.guild.voice_channels if i.name == options['lobby']][0]
@@ -19,6 +20,11 @@ async def draft(ctx,player_name : Player):
     temp_dict = {i.name : i for i in ctx.guild.voice_channels}
     channel_dict = {"A":temp_dict[options["team_a"]],"B":temp_dict[options["team_b"]]}
     await ctx.send(embed=await bot.draft_player(ctx.author,player_name,channel_dict))
+@bot.command()
+async def draft_for_bot(ctx,bot_name : Player, player_name : Player):
+    temp_dict = {i.name : i for i in ctx.guild.voice_channels}
+    channel_dict = {"A":temp_dict[options["team_a"]],"B":temp_dict[options["team_b"]]}
+    await ctx.send(embed=await bot.draft_player(bot_name,player_name,channel_dict))
 @bot.command() 
 async def ready(ctx):
     await ctx.send(embed=await bot.ready_up(ctx.author))
@@ -37,6 +43,5 @@ async def new(ctx):
     lobby_channel = [i for i in ctx.guild.voice_channels if i.name == options['lobby']][0]
     embed = await bot.new_game(lobby_channel.members)
     await ctx.send(embed=embed)
-
 
 bot.run(options['token'])

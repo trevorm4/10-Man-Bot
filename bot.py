@@ -7,9 +7,13 @@ from converters import Player
 
 class Bot(commands.Bot):
     def __init__(self,command_prefix, drafting_scheme):
+        """
+        Constructor for Bot
+            :param command_prefix: symbol to type before command. For ex, use "!" if you want to use "!<command>"
+            :param drafting_scheme: list contains strings of format "<A/B><1-2>" where first char is team and 2nd char is # players
+        """   
         commands.Bot.__init__(self,command_prefix=command_prefix)
         self.teams = {"A" : [], "B" : []}
-        self.ready_dict = {}
         self.remaining = []
         self.captains = {"A" : None, "B": None}
         self.channels = {"A" : None, "B" : None}
@@ -43,7 +47,6 @@ class Bot(commands.Bot):
         """
         Clears instance variables in preperation for new game
             :param players: list of Discord.Member variables representing players
-            :param drafting_scheme: list contains strings of format "<A/B><1-2>" where first char is team and 2nd char is # players
         """   
         if len(players) != 10:
             return discord.Embed(title="Valorant 10 Man Bot",
