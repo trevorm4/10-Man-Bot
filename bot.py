@@ -21,6 +21,7 @@ class Bot(commands.Bot):
         self.drafting_dict = {"A" : [int(s[1]) for s in drafting_scheme if s[0] == "A"],
                               "B" : [int(s[1]) for s in drafting_scheme if s[0] == "B"]}
         self.turn = -1
+        self.remove_command("help") # we make a custom help command
     async def set_captain(self, cap : Player, team):
         """
         Sets captain for specified team
