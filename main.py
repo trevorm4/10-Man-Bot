@@ -9,9 +9,9 @@ bot = Bot("!", options["scheme"].split(" "))
 
 @bot.command()
 async def newcaps(ctx):
-    lobby_channel = [i for i in ctx.guild.voice_channels if i.name == options['lobby']][0]
-    a_channel = [i for i in ctx.guild.voice_channels if i.name == options['team_a']][0]
-    b_channel = [i for i in ctx.guild.voice_channels if i.name == options['team_b']][0]
+    lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
+    a_channel = next((i for i in ctx.guild.voice_channels if i.name == options['team_a']), None)
+    b_channel = next((i for i in ctx.guild.voice_channels if i.name == options['team_b']), None)
     players = lobby_channel.members
     await bot.new_game(players)
     await ctx.send(embed=await bot.generate_captains(a_channel,b_channel))
@@ -30,7 +30,7 @@ async def ready(ctx):
     await ctx.send(embed=await bot.ready_up(ctx.author))
 @bot.command()
 async def setcaps(ctx,cap1 : Player, cap2 : Player):
-    lobby_channel = [i for i in ctx.guild.voice_channels if i.name == options['lobby']][0]
+    lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
     players = lobby_channel.members
     await bot.new_game(players)
     await bot.set_captain(cap1,"A")
@@ -40,7 +40,7 @@ async def setcaps(ctx,cap1 : Player, cap2 : Player):
     await ctx.send(embed=embed)
 @bot.command()
 async def new(ctx):
-    lobby_channel = [i for i in ctx.guild.voice_channels if i.name == options['lobby']][0]
+    lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
     embed = await bot.new_game(lobby_channel.members)
     await ctx.send(embed=embed)
 
