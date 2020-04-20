@@ -3,6 +3,7 @@ from discord.ext import commands
 import yaml
 import random
 from utils import get_member_name
+from converters import Player
 
 class Bot(commands.Bot):
     def __init__(self,command_prefix):
@@ -15,7 +16,7 @@ class Bot(commands.Bot):
         self.captains = {"A" : None, "B": None}
         self.channels = {"A" : None, "B" : None}
         self.order = []
-    async def set_captain(self,cap,team):
+    async def set_captain(self, cap : Player, team):
         """
         Sets captain for specified team
             :param cap: discord.Member object representing user that is now captain
@@ -26,7 +27,7 @@ class Bot(commands.Bot):
         self.captains[team.upper()] = cap
         await self.add_to_team(cap,team)
         self.order.append(cap)
-    async def add_to_team(self,player,team):
+    async def add_to_team(self, player : Player, team):
         """
         Adds player to team
             :param player: Discord.Member representing player member
@@ -70,14 +71,14 @@ class Bot(commands.Bot):
             await self.set_captain(caps[i],team)
             #self.remaining.remove(caps[i])
         return discord.Embed(title="Valorant 10 Man Bot",
-            description="The captains are @{} and @{}".format(get_member_name(caps[0],lower=False),get_member_name(caps[1],lower=False)))
+            description="The captains are @{} (1st pick) and @{} (2nd pick)".format(get_member_name(caps[0],lower=False),get_member_name(caps[1],lower=False)))
     async def get_remaining(self):
         """
         Gets remaining players
         :ret: list of remaining players of type Discord.Member
         """   
         return self.remaining
-    async def ready_up(self,player):
+    async def ready_up(self, player : Player):
         """
         Sets status of player to ready
             :param player: discord.Member object representing player
@@ -85,14 +86,14 @@ class Bot(commands.Bot):
         """   
         self.ready_dict[player] = True
         return discord.Embed(title="Valorant 10 Man Bot",description="{} is now ready".format(get_member_name(player)))
-    async def move_player(self,player,channel):
+    async def move_player(self, player : Player, channel):
         """
         Moves player to specified channel
             :param player: discord.Member object that represents player
             :param channel: discord.VoiceChannel object representing channel to move to
         """
         await player.move_to(channel)
-    async def draft_player(self, captain, player, channel_dict):
+    async def draft_player(self, captain : Player, player : Player, channel_dict):
         """
         Drafts a player according to 1-2-1-1-1-1-1-1-1 schema
             :param captain: discord.Member object representing captain
