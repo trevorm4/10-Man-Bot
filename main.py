@@ -33,7 +33,7 @@ async def setcaps(ctx,cap1 : Player, cap2 : Player):
     await bot.set_captain(cap1,"A")
     await bot.set_captain(cap2,"B")
     embed = discord.Embed(title="Valorant 10 Man Bot",
-            description="The captains are @{} and @{}".format(get_member_name(cap1,lower=False),get_member_name(cap2,lower=False)))
+            description="The captains are {} and {}".format(get_member_name(cap1,lower=False),get_member_name(cap2,lower=False)))
     await ctx.send(embed=embed)
 @bot.command()
 async def new(ctx):

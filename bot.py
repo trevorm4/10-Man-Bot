@@ -41,7 +41,8 @@ class Bot(commands.Bot):
         if player in self.remaining:
             self.teams[team].append(player)
             self.remaining.remove(player)
-            return discord.Embed(title="Valorant 10 Man Bot",description="You have drafted {}".format(get_member_name(player,lower=False)))
+            return discord.Embed(title="Valorant 10 Man Bot",
+                description="{} has been drafted to team {}".format(get_member_name(player,lower=False), ":a:" if team == "A" else ":b:"))
         else:
             return discord.Embed(title="Valorant 10 Man Bot",description="Sorry, {} is already drafted".format(get_member_name(player)))
     async def new_game(self, players):
@@ -92,8 +93,8 @@ class Bot(commands.Bot):
             :param captain: discord.Member object representing captain
             :param player:  discord.Member object representing player
         """
-        if player not in self.nick_to_player.values():
-            return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a valid player".format(player))
+        if player not in self.remaining:
+            return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a valid player or they have been drafted already".format(player))
         elif captain not in self.captains.values():
             return discord.Embed(title="Valorant 10 Man Bot",description="{} is not a captain".format(get_member_name(captain)))
             
