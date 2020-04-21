@@ -35,6 +35,14 @@ class Bot(commands.Bot):
         self.captains[team.upper()] = cap
         await self.add_to_team(cap,team)
         self.order.append(cap)
+    async def get_team_embed(self):
+        """
+        Generates an embed for the chosen teams
+        """
+        embed = discord.Embed(title="Valorant 10 Man Bot",colour=discord.Colour(0x470386))   
+        embed.add_field(name="Team A", value="{}".format("\n".join(self.teams["A"])), inline=True)
+        embed.add_field(name="Team B", value="{}".format("\n".join(self.teams["B"])), inline=True)
+        return embed
     async def add_to_team(self, player : Player, team):
         """
         Adds player to team
@@ -92,6 +100,7 @@ class Bot(commands.Bot):
             self.map_dict[map_to_ban.lower()] = False
             counter = Counter(self.map_dict.values())
             embed_string = ""
+
             if counter[False] == len(self.map_dict.keys()) - 1: # one map remaining
                 embed_string = "The match will be played on {}".format(next((prettify(k) for k in self.map_dict.keys() if self.map_dict[k]), None))
             else:
@@ -113,7 +122,7 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man Bot",
                 description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
         caps = random.sample(self.remaining, 2) # 2 captains
-        
+
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
 
@@ -153,6 +162,8 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man bot",description="You've already drafted this turn, please wait for the other captain")
         
         embed = await self.add_to_team(player, team)
+        if len(self.remaining) == 0:
+            embed = await self.get_team_embed()
         channel = channel_dict[team]
         await self.move_player(player,channel)
 
