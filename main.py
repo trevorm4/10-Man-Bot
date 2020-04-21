@@ -1,5 +1,6 @@
 import discord
 import yaml
+import os
 
 from bot import Bot
 from utils import get_member_name
@@ -72,4 +73,4 @@ async def help(ctx):
                          :four: !new : starts a new game (does not set captains)")
     await ctx.send(embed=embed)
     
-bot.run(options['token'])
+bot.run(os.environ["DISCORD_KEY"])

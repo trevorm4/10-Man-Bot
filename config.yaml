@@ -1,4 +1,15 @@
-token: "API_TOKEN_HERE"
-lobby: "Valorant Lobby"
+lobby: "10 Man Lobby"
 team_a: "Valorant Team A"
 team_b: "Valorant Team B"
+scheme:
+  - "A1"
+  - "B2"
+  - "A1"
+  - "B1"
+  - "A1"
+  - "B1"
+  - "A1"
+maps:
+  - "Bind"
+  - "Split"
+  - "Haven"
