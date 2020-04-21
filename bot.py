@@ -1,16 +1,19 @@
+from collections import Counter
 import discord
 from discord.ext import commands
 import yaml
 import random
-from utils import get_member_name
+
+from utils import get_member_name, prettify
 from converters import Player
 
 class Bot(commands.Bot):
-    def __init__(self,command_prefix, drafting_scheme):
+    def __init__(self,command_prefix, drafting_scheme, maps):
         """
         Constructor for Bot
             :param command_prefix: symbol to type before command. For ex, use "!" if you want to use "!<command>"
             :param drafting_scheme: list contains strings of format "<A/B><1-2>" where first char is team and 2nd char is # players
+            :param maps: list of strings where each string corresponds to a map name
         """   
         commands.Bot.__init__(self,command_prefix=command_prefix)
         self.teams = {"A" : [], "B" : []}
@@ -21,6 +24,7 @@ class Bot(commands.Bot):
         self.drafting_dict = {"A" : [int(s[1]) for s in drafting_scheme if s[0] == "A"],
                               "B" : [int(s[1]) for s in drafting_scheme if s[0] == "B"]}
         self.turn = -1
+        self.map_dict = {k.lower() : True for k in maps}
         self.remove_command("help") # we make a custom help command
     async def set_captain(self, cap : Player, team):
         """
@@ -59,8 +63,41 @@ class Bot(commands.Bot):
         self.remaining = players.copy()
         self.turn = 1
         self.order = []
+        self.map_dict = {k : True for k in self.map_dict.keys()}
         return discord.Embed(title="Valorant 10 Man Bot",
             description="New game started".format(len(players)))
+    async def get_remaining_map_string(self):
+        embed_string = ""
+        num_available = 1
+        for m in self.map_dict.keys():
+                if self.map_dict[m]:
+                    pretty = prettify(m)
+                    embed_string += "{}. {}\n".format(num_available,pretty)
+                    num_available += 1
+        return embed_string
+    async def ban_map(self, map_to_ban : str, caller : Player):
+        """
+        Remove map from pool
+            :param map_to_ban: str that represents map to ban
+            :param caller: discord.Member object that represents who called the command
+        """   
+        if caller not in self.captains.values():
+            return discord.Embed(title="Valorant 10 Man Bot", description="Only captains can ban maps")
+        map_to_ban = map_to_ban[0].upper() + map_to_ban[1:].lower()
+        if map_to_ban.lower() in self.map_dict.keys() and self.map_dict[map_to_ban.lower()] == True:
+            self.map_dict[map_to_ban.lower()] = False
+            counter = Counter(self.map_dict.values())
+            embed_string = ""
+            if counter[False] == len(self.map_dict.keys()) - 1: # one map remaining
+                embed_string = "The match will be played on {}".format(next((prettify(k) for k in self.map_dict.keys() if self.map_dict[k]), None))
+            else:
+                embed_string = f"{map_to_ban} has been banned\n\n The remaining maps are\n\n" + await self.get_remaining_map_string()
+            return discord.Embed(title="Valorant 10 Man Bot", description=embed_string)
+        elif map_to_ban.lower() not in self.map_dict.keys():
+            return discord.Embed(title="Valorant 10 Man Bot", description=f"{map_to_ban} is not a valid map")
+        elif not self.map_dict[map_to_ban.lower()]:
+            return discord.Embed(title="Valorant 10 Man Bot", 
+                                 description=f"{map_to_ban} is already banned. The remaining maps are:\n"+ await self.get_remaining_map_string()) 
     async def generate_captains(self,team_a_channel, team_b_channel):
         """
         Generates two new captains and sets them as captains

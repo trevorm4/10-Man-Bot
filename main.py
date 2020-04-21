@@ -1,12 +1,16 @@
 import discord
-from bot import Bot
 import yaml
+
+from bot import Bot
 from utils import get_member_name
 from converters import Player
 
 options = yaml.load(open("config.yaml",'r'))
-bot = Bot("!", options["scheme"].split(" "))
+bot = Bot("!", options["scheme"], options["maps"])
 
+@bot.event
+async def on_ready():
+    await bot.change_presence(activity=discord.Game(name="!help for help"))
 @bot.command()
 async def newcaps(ctx):
     lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
@@ -15,6 +19,16 @@ async def newcaps(ctx):
     players = lobby_channel.members
     await bot.new_game(players)
     await ctx.send(embed=await bot.generate_captains(a_channel,b_channel))
+@bot.command()
+async def ban(ctx, map_name : str):
+    embed = await bot.ban_map(map_name, ctx.author)
+    await ctx.send(embed=embed)
+@bot.command()
+async def nc(ctx):
+    await newcaps(ctx)
+@bot.command()
+async def d(ctx, player_name : Player):
+    await draft(ctx, player_name)
 @bot.command()
 async def draft(ctx,player_name : Player):
     temp_dict = {i.name : i for i in ctx.guild.voice_channels}
@@ -43,8 +57,8 @@ async def new(ctx):
 @bot.command()
 async def help(ctx):
     embed = discord.Embed(title="Valorant 10 Man Bot",
-            description="The following commands are available\n\n :one: !newcaps : selects captains for current game\n\
-                         :two: !draft <player name> : drafts player to your team (you must be captain)\n\
+            description="The following commands are available\n\n :one: !nc : selects captains for current game\n\
+                         :two: !d <player name> : drafts player to your team (you must be captain)\n\
                          :three: !setcaps <captain1> <captain2> : manually set the captains \n\
                          :four: !new : starts a new game (does not set captains)")
     await ctx.send(embed=embed)
