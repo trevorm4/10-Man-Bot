@@ -11,6 +11,7 @@ bot = Bot("!", options["scheme"], options["maps"])
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="!help for help"))
+
 @bot.command()
 async def newcaps(ctx):
     lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
@@ -19,26 +20,32 @@ async def newcaps(ctx):
     players = lobby_channel.members
     await bot.new_game(players)
     await ctx.send(embed=await bot.generate_captains(a_channel,b_channel))
+
 @bot.command()
 async def ban(ctx, map_name : str):
     embed = await bot.ban_map(map_name, ctx.author)
     await ctx.send(embed=embed)
+
 @bot.command()
 async def nc(ctx):
     await newcaps(ctx)
+
 @bot.command()
 async def d(ctx, player_name : Player):
     await draft(ctx, player_name)
+
 @bot.command()
 async def draft(ctx,player_name : Player):
     temp_dict = {i.name : i for i in ctx.guild.voice_channels}
     channel_dict = {"A":temp_dict[options["team_a"]],"B":temp_dict[options["team_b"]]}
     await ctx.send(embed=await bot.draft_player(ctx.author,player_name,channel_dict))
+
 @bot.command()
 async def draft_for_bot(ctx,bot_name : Player, player_name : Player):
     temp_dict = {i.name : i for i in ctx.guild.voice_channels}
     channel_dict = {"A":temp_dict[options["team_a"]],"B":temp_dict[options["team_b"]]}
     await ctx.send(embed=await bot.draft_player(bot_name,player_name,channel_dict))
+
 @bot.command()
 async def setcaps(ctx,cap1 : Player, cap2 : Player):
     lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
@@ -49,11 +56,13 @@ async def setcaps(ctx,cap1 : Player, cap2 : Player):
     embed = discord.Embed(title="Valorant 10 Man Bot",
             description="The captains are {} and {}".format(get_member_name(cap1,lower=False),get_member_name(cap2,lower=False)))
     await ctx.send(embed=embed)
+
 @bot.command()
 async def new(ctx):
     lobby_channel = next((i for i in ctx.guild.voice_channels if i.name == options['lobby']), None)
     embed = await bot.new_game(lobby_channel.members)
     await ctx.send(embed=embed)
+
 @bot.command()
 async def help(ctx):
     embed = discord.Embed(title="Valorant 10 Man Bot",
@@ -62,4 +71,5 @@ async def help(ctx):
                          :three: !setcaps <captain1> <captain2> : manually set the captains \n\
                          :four: !new : starts a new game (does not set captains)")
     await ctx.send(embed=embed)
+    
 bot.run(options['token'])

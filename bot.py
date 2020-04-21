@@ -49,6 +49,7 @@ class Bot(commands.Bot):
                 description="{} has been drafted to team {}".format(get_member_name(player,lower=False), ":a:" if team == "A" else ":b:"))
         else:
             return discord.Embed(title="Valorant 10 Man Bot",description="Sorry, {} is already drafted".format(get_member_name(player)))
+
     async def new_game(self, players):
         """
         Clears instance variables in preperation for new game
@@ -66,6 +67,7 @@ class Bot(commands.Bot):
         self.map_dict = {k : True for k in self.map_dict.keys()}
         return discord.Embed(title="Valorant 10 Man Bot",
             description="New game started".format(len(players)))
+
     async def get_remaining_map_string(self):
         embed_string = ""
         num_available = 1
@@ -75,6 +77,7 @@ class Bot(commands.Bot):
                     embed_string += "{}. {}\n".format(num_available,pretty)
                     num_available += 1
         return embed_string
+
     async def ban_map(self, map_to_ban : str, caller : Player):
         """
         Remove map from pool
@@ -84,6 +87,7 @@ class Bot(commands.Bot):
         if caller not in self.captains.values():
             return discord.Embed(title="Valorant 10 Man Bot", description="Only captains can ban maps")
         map_to_ban = map_to_ban[0].upper() + map_to_ban[1:].lower()
+
         if map_to_ban.lower() in self.map_dict.keys() and self.map_dict[map_to_ban.lower()] == True:
             self.map_dict[map_to_ban.lower()] = False
             counter = Counter(self.map_dict.values())
@@ -93,8 +97,10 @@ class Bot(commands.Bot):
             else:
                 embed_string = f"{map_to_ban} has been banned\n\n The remaining maps are\n\n" + await self.get_remaining_map_string()
             return discord.Embed(title="Valorant 10 Man Bot", description=embed_string)
+
         elif map_to_ban.lower() not in self.map_dict.keys():
             return discord.Embed(title="Valorant 10 Man Bot", description=f"{map_to_ban} is not a valid map")
+
         elif not self.map_dict[map_to_ban.lower()]:
             return discord.Embed(title="Valorant 10 Man Bot", 
                                  description=f"{map_to_ban} is already banned. The remaining maps are:\n"+ await self.get_remaining_map_string()) 
@@ -107,8 +113,10 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man Bot",
                 description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
         caps = random.sample(self.remaining, 2) # 2 captains
+        
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
+
         return discord.Embed(title="Valorant 10 Man Bot",
             description="The captains are @{} (1st pick) and @{} (2nd pick)".format(get_member_name(caps[0],lower=False),get_member_name(caps[1],lower=False)))
     async def get_remaining(self):
