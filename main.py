@@ -23,6 +23,10 @@ async def newcaps(ctx):
     await ctx.send(embed=await bot.generate_captains(a_channel,b_channel))
 
 @bot.command()
+async def b(ctx, map_name : str):
+    await ban(ctx, map_name)
+
+@bot.command()
 async def ban(ctx, map_name : str):
     embed = await bot.ban_map(map_name, ctx.author)
     await ctx.send(embed=embed)
