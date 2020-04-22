@@ -39,9 +39,11 @@ class Bot(commands.Bot):
         """
         Generates an embed for the chosen teams
         """
-        embed = discord.Embed(title="Valorant 10 Man Bot",colour=discord.Colour(0x470386))   
-        embed.add_field(name="Team A", value="{}".format("\n".join(self.teams["A"])), inline=True)
-        embed.add_field(name="Team B", value="{}".format("\n".join(self.teams["B"])), inline=True)
+        embed = discord.Embed(title="Valorant 10 Man Bot",colour=discord.Colour(0x470386))
+        team_a_strings = [get_member_name(m,lower=False) for m in self.teams["A"]]
+        team_b_strings = [get_member_name(m,lower=False) for m in self.teams["B"]]   
+        embed.add_field(name="Team A", value="{}".format("\n".join(team_a_strings)), inline=True)
+        embed.add_field(name="Team B", value="{}".format("\n".join(team_b_strings)), inline=True)
         return embed
     async def add_to_team(self, player : Player, team):
         """

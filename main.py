@@ -70,7 +70,8 @@ async def help(ctx):
             description="The following commands are available\n\n :one: !nc : selects captains for current game\n\
                          :two: !d <player name> : drafts player to your team (you must be captain)\n\
                          :three: !setcaps <captain1> <captain2> : manually set the captains \n\
-                         :four: !new : starts a new game (does not set captains)")
+                         :four: !new : starts a new game (does not set captains)\n\
+                         :five: !ban <map_name> : bans a map (must be captain)")
     await ctx.send(embed=embed)
     
 bot.run(os.environ["DISCORD_KEY"])
