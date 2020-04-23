@@ -7,7 +7,8 @@ from utils import get_member_name
 from converters import Player
 
 options = yaml.load(open("config.yaml",'r'))
-bot = Bot("!", options["scheme"], options["maps"])
+blacklist = open("blacklist.txt","r").readlines()
+bot = Bot("!", options["scheme"], options["maps"], blacklist)
 
 @bot.event
 async def on_ready():

@@ -8,7 +8,7 @@ from utils import get_member_name, prettify
 from converters import Player
 
 class Bot(commands.Bot):
-    def __init__(self,command_prefix, drafting_scheme, maps):
+    def __init__(self,command_prefix, drafting_scheme, maps, blacklist):
         """
         Constructor for Bot
             :param command_prefix: symbol to type before command. For ex, use "!" if you want to use "!<command>"
@@ -21,6 +21,7 @@ class Bot(commands.Bot):
         self.captains = {"A" : None, "B": None}
         self.channels = {"A" : None, "B" : None}
         self.order = []
+        self.blacklist = [get_member_name(f) for f in blacklist]
         self.drafting_dict = {"A" : [int(s[1]) for s in drafting_scheme if s[0] == "A"],
                               "B" : [int(s[1]) for s in drafting_scheme if s[0] == "B"]}
         self.turn = -1
@@ -124,6 +125,10 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man Bot",
                 description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
         caps = random.sample(self.remaining, 2) # 2 captains
+        contains_bad = True in [get_member_name(f) in self.blacklist for f in caps]
+        while contains_bad == True:
+            caps = random.sample(self.remaining, 2)
+            contains_bad = True in [get_member_name(f) in self.blacklist for f in caps]
 
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
@@ -173,4 +178,3 @@ class Bot(commands.Bot):
             self.turn += 1
 
         return embed
-        
