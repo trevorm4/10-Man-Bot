@@ -8,6 +8,9 @@ from datetime import datetime
 from utils import get_member_name, prettify
 from converters import Player
 
+TIME_THRESOLD = 1.5 # number of hours cutoff to check previous players when choosing captains
+SECS_TO_HOURS = 60**2
+
 class Bot(commands.Bot):
     def __init__(self,command_prefix, drafting_scheme, maps, blacklist):
         """
@@ -129,7 +132,7 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man Bot",
                 description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
         caps = random.sample(self.remaining, 2) # 2 captains
-        check_prev = self.previous_time and (datetime.now() - self.previous_time).hour <= 2
+        check_prev = self.previous_time and (datetime.now() - self.previous_time).seconds / SECS_TO_HOURS <= TIME_THRESOLD #seconds to hours conversion
         contains_bad = True in [get_member_name(f) in self.blacklist or 
                             (check_prev and len(self.previous_players) > 0 and get_member_name(f) not in self.previous_players) for f in caps]
         while contains_bad == True:
