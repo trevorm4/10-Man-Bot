@@ -27,6 +27,7 @@ class Bot(commands.Bot):
         self.order = []
         self.blacklist = [get_member_name(f) for f in blacklist]
         self.previous_players = []
+        self.previous_captains = {}
         self.previous_time = None
         self.drafting_dict = {"A" : [int(s[1]) for s in drafting_scheme if s[0] == "A"],
                               "B" : [int(s[1]) for s in drafting_scheme if s[0] == "B"]}
@@ -76,6 +77,7 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man Bot",
             description="You cannot start a game with only {} players".format(len(players)))
         self.teams = {"A": [], "B" : []}
+        self.previous_captains = self.captains
         self.captains = {"A" : None, "B" : None}
         self.nick_to_player = {get_member_name(p) : p for p in players}
         self.previous_players = self.remaining
@@ -131,15 +133,16 @@ class Bot(commands.Bot):
         if len(self.remaining) != 10:
             return discord.Embed(title="Valorant 10 Man Bot",
                 description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
-        caps = random.sample(self.remaining, 2) # 2 captains
+        potential = []
         check_prev = self.previous_time and (datetime.now() - self.previous_time).seconds / SECS_TO_HOURS <= TIME_THRESOLD #seconds to hours conversion
-        contains_bad = True in [get_member_name(f) in self.blacklist or 
-                            (check_prev and len(self.previous_players) > 0 and get_member_name(f) not in self.previous_players) for f in caps]
-        while contains_bad == True:
-            caps = random.sample(self.remaining, 2)
-            contains_bad = True in [get_member_name(f) in self.blacklist or 
-                                        (check_prev and len(self.previous_players) > 0 
-                                            and get_member_name(f) not in self.previous_players) for f in caps]
+        for p in self.remaining:
+            was_captain = p in self.previous_captains.values()
+            was_in_previous = not check_prev or (check_prev and p in self.previous_players)
+            blacklisted = get_member_name(p) in self.blacklist
+            if not was_captain and was_in_previous and not blacklisted:
+                potential.append(p)
+
+        caps = random.sample(self.remaining, 2) # 2 captains
 
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
