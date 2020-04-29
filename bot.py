@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import yaml
 import random
+from datetime import datetime
 
 from utils import get_member_name, prettify
 from converters import Player
@@ -22,6 +23,8 @@ class Bot(commands.Bot):
         self.channels = {"A" : None, "B" : None}
         self.order = []
         self.blacklist = [get_member_name(f) for f in blacklist]
+        self.previous_players = []
+        self.previous_time = None
         self.drafting_dict = {"A" : [int(s[1]) for s in drafting_scheme if s[0] == "A"],
                               "B" : [int(s[1]) for s in drafting_scheme if s[0] == "B"]}
         self.turn = -1
@@ -43,8 +46,8 @@ class Bot(commands.Bot):
         embed = discord.Embed(title="Valorant 10 Man Bot",colour=discord.Colour(0x470386))
         team_a_strings = [get_member_name(m,lower=False) for m in self.teams["A"]]
         team_b_strings = [get_member_name(m,lower=False) for m in self.teams["B"]]   
-        embed.add_field(name="Team A", value="{}".format("\n".join(team_a_strings)), inline=True)
-        embed.add_field(name="Team B", value="{}".format("\n".join(team_b_strings)), inline=True)
+        embed.add_field(name="Defenders", value="{}".format("\n".join(team_a_strings)), inline=True)
+        embed.add_field(name="Attackers", value="{}".format("\n".join(team_b_strings)), inline=True)
         return embed
     async def add_to_team(self, player : Player, team):
         """
@@ -72,6 +75,7 @@ class Bot(commands.Bot):
         self.teams = {"A": [], "B" : []}
         self.captains = {"A" : None, "B" : None}
         self.nick_to_player = {get_member_name(p) : p for p in players}
+        self.previous_players = self.remaining
         self.remaining = players.copy()
         self.turn = 1
         self.order = []
@@ -125,10 +129,14 @@ class Bot(commands.Bot):
             return discord.Embed(title="Valorant 10 Man Bot",
                 description="Please use the command !new and ensure you have 10 players in the channel before selecting captains")
         caps = random.sample(self.remaining, 2) # 2 captains
-        contains_bad = True in [get_member_name(f) in self.blacklist for f in caps]
+        check_prev = self.previous_time and (datetime.now() - self.previous_time).hour <= 2
+        contains_bad = True in [get_member_name(f) in self.blacklist or 
+                            (check_prev and len(self.previous_players) > 0 and get_member_name(f) not in self.previous_players) for f in caps]
         while contains_bad == True:
             caps = random.sample(self.remaining, 2)
-            contains_bad = True in [get_member_name(f) in self.blacklist for f in caps]
+            contains_bad = True in [get_member_name(f) in self.blacklist or 
+                                        (check_prev and len(self.previous_players) > 0 
+                                            and get_member_name(f) not in self.previous_players) for f in caps]
 
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
@@ -171,6 +179,7 @@ class Bot(commands.Bot):
         embed = await self.add_to_team(player, team)
         if len(self.remaining) == 0:
             embed = await self.get_team_embed()
+            self.previous_time = datetime.now()
         channel = channel_dict[team]
         await self.move_player(player,channel)
 
