@@ -142,7 +142,7 @@ class Bot(commands.Bot):
             if not was_captain and was_in_previous and not blacklisted:
                 potential.append(p)
 
-        caps = random.sample(self.remaining, 2) # 2 captains
+        caps = random.sample(potential, 2) # 2 captains
 
         for i,team in enumerate(self.captains.keys()):
             await self.set_captain(caps[i],team)
