@@ -1,6 +1,5 @@
-# Valorant-10-Man-Bot
-
-This is a bot that facilitates a Valorant 10 man lobby with auto moving features.
+# 10 Man Bot
+This is a bot that facilitates a 10 man lobby (for Valorant or other games) with auto moving features.
 
 It requires a config.yaml file with the fields `team_a`, `team_b`,`lobby`, `scheme`, and `maps`, which signify the channel names for each team, drafting scheme, and map pool.
 
