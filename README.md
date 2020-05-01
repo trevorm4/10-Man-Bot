@@ -24,8 +24,13 @@ You should configure the maps and channel names in config.yaml if the provided o
 ## Commands
 
 `!help` : Lists all commands
+
 `!new`  : Starts new game, but does not select captain
+
 `!nc`    : Starts new game and selects captains
+
 `!setcaps @<cap1> @<cap2>` : Manually sets the captains to specified users
+
 `!ban <map_name>` : Bans provided map from map pool
+
 `!draft @<player_name>` : Drafts user to your team (you must be captain to use this command)
