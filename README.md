@@ -9,11 +9,11 @@ You must also save your Discord Bot API key in the `DISCORD_KEY` environment var
 
 Verify that you have Python 3.7 or later and run the following
 
-```python3.7 -m pip install -r requirements.txt```
+```python -m pip install -r requirements.txt```
 
 and then run the bot with
 
-```python3.7 main.py```
+```python main.py```
 
 ## Setup
 
